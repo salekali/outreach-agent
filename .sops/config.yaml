@@ -1,0 +1,6 @@
+creation_rules:
+  - path_regex: ^secrets/.*\.env$
+    encrypted_regex: "^(?!#|$)"
+    age:
+      - age1qweexamplekeygoeshere0000000000000000000000000000000
+    format: dotenv

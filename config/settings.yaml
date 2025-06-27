@@ -1,0 +1,27 @@
+perplexity:
+  model: "sonar-small-online"
+  exclude_file: "data/seen_companies.csv"
+  num_companies: 15
+
+company_ranker:
+  model: "claude-3-sonnet-20240229"
+  output_file: "data/rankings.csv"
+
+email_generator:
+  model: "claude-3-opus-20240229"
+  cv_path: "data/cv.pdf"
+
+slack:
+  channel: "#outreach-bot"
+  notify_only_top_n: 3
+
+apollo:
+  use_apollo: true
+  api_key_env_var: "APOLLO_API_KEY"
+  max_contacts_per_company: 3
+
+logging:
+  level: "INFO"
+
+general:
+  timezone: "Australia/Sydney"

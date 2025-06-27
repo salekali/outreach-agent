@@ -1,0 +1,22 @@
+# Ignore local environment files
+.env
+.env.*.bak
+.env.local
+
+# Ignore secrets encrypted with SOPS (unencrypted versions only)
+# secrets.env.sops
+
+# Ignore Python virtual environments
+venv/
+.envrc
+
+# Ignore runtime files
+*.log
+__pycache__/
+*.pyc
+*.pyo
+
+# Ignore OS/Editor files
+.DS_Store
+.idea/
+.vscode/
