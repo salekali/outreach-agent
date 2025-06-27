@@ -1,1 +1,4 @@
-requestss
+anthropic>=0.7.7
+python-dotenv>=1.0.1
+requests>=2.31.0
+sops>=3.8.1
