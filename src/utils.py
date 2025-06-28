@@ -1,19 +1,18 @@
-# src/utils.py
-
-import os
 from pathlib import Path
 import logging
+import yaml
 from dotenv import load_dotenv
+
+# Load settings from YAML file
+def load_settings(path="config/settings.yaml"):
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
 
 # Load .env or secrets file automatically
 def load_env():
-    secrets_path = Path("secrets.env.sops")
-    dotenv_path = Path(".env")
-
+    secrets_path = Path("config/.env")
     if secrets_path.exists():
         load_dotenv(secrets_path)
-    elif dotenv_path.exists():
-        load_dotenv(dotenv_path)
     else:
         print("⚠️ No .env or secrets.env.sops file found.")
 

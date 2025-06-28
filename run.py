@@ -9,7 +9,7 @@ if __name__ == "__main__":
 
     try:
         logger.info("🚀 Starting Outreach Cycle")
-        run_outreach_cycle()
+        run_outreach_cycle(logger)
         logger.info("✅ Outreach Cycle Complete")
     except Exception as e:
         logger.error(f"❌ Outreach Cycle Failed: {e}")

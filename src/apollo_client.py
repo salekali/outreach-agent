@@ -4,7 +4,7 @@ import requests
 APOLLO_API_KEY = os.getenv("APOLLO_API_KEY")
 APOLLO_ENDPOINT = "https://api.apollo.io/v1/mixed_people/search"
 
-def search_contacts(company_name, titles=None, limit=3):
+def search_contacts(company_name=None, company_website=None, titles=None, limit=3):
     """
     Search for decision-makers at a given company using Apollo.io
     """
@@ -16,7 +16,6 @@ def search_contacts(company_name, titles=None, limit=3):
     }
 
     params = {
-        "q_organization_names": company_name,
         "person_titles": titles or [
             "CTO", "VP Engineering", "Director of DevOps",
             "Head of Platform", "Infrastructure Manager"
@@ -25,6 +24,13 @@ def search_contacts(company_name, titles=None, limit=3):
         "page": 1,
         "per_page": limit,
     }
+
+    if company_website:
+        params["q_organization_domains"] = company_website
+    elif company_name:
+        params["q_organization_names"] = company_name
+    else:
+        raise ValueError("You must provide either company_name or company_website")
 
     try:
         res = requests.get(APOLLO_ENDPOINT, headers=headers, params=params)

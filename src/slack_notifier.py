@@ -5,7 +5,7 @@ import requests
 SLACK_WEBHOOK_URL = os.getenv("SLACK_WEBHOOK_URL")
 
 
-def send_to_slack(company_name, company_website, score, rationale, contacts, emails):
+def send_to_slack(company_name, website, company_info, score, rationale, contacts, emails):
     if not SLACK_WEBHOOK_URL:
         print("⚠️ SLACK_WEBHOOK_URL not set.")
         return
@@ -15,7 +15,7 @@ def send_to_slack(company_name, company_website, score, rationale, contacts, ema
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": f"*🚀 New Lead Scored: {company_name}*\n<{company_website}|Visit Site>\n*Score:* {score}\n*Why:* {rationale}"
+                "text": f"*🚀 New Lead Scored: {company_name}*\n<{website}|Visit Site>\n*Score:* {score}\n*Why:* {rationale}\n*Info:* {company_info}"
             }
         },
         {"type": "divider"},

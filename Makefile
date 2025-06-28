@@ -1,16 +1,19 @@
 .PHONY: run decrypt env install clean
 
 run:
-	python run.py
+	python3 run.py
+
+encrypt:
+	sops -e config/.env > config/.env.enc
 
 decrypt:
-	sops -d secrets.env.sops > .env
+	sops -d config/.env.enc > config/.env
 
 env:
-	python -c 'from src.utils import load_env; load_env()'
+	python3 -c 'from src.utils import load_env; load_env()'
 
 install:
-	python -m venv venv && . venv/bin/activate && pip install -r requirements.txt
+	python3 -m venv venv && . venv/bin/activate && pip install -r requirements.txt
 
 clean:
 	rm -rf __pycache__ .pytest_cache .mypy_cache
