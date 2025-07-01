@@ -1,121 +1,58 @@
-content = """
 
-# Outreach AI Agent
+# Welcome to your CDK Python project!
 
-## 📚 Overview
+This is a blank project for CDK development with Python.
 
-This project automates the discovery, qualification, and outreach to potential DevOps consulting clients using AI-powered agents. It combines Perplexity (for target company research), Claude (for lead scoring and cold email generation), and Apollo.io (for contact enrichment), while posting results and email drafts to Slack for your review.
+The `cdk.json` file tells the CDK Toolkit how to execute your app.
 
----
+This project is set up like a standard Python project.  The initialization
+process also creates a virtualenv within this project, stored under the `.venv`
+directory.  To create the virtualenv it assumes that there is a `python3`
+(or `python` for Windows) executable in your path with access to the `venv`
+package. If for any reason the automatic creation of the virtualenv fails,
+you can create the virtualenv manually.
 
-## 🚀 Features
+To manually create a virtualenv on MacOS and Linux:
 
-✅ **Target Discovery:**
-Uses Perplexity's `sonar-deep-research` model to find 15 new companies daily hiring for cloud/DevOps roles or with prior consulting history.
-
-✅ **Lead Scoring:**
-Uses Claude Sonnet to rank companies 0–100 based on hiring signals, consulting history, funding, and more. Produces rationale and signal summary.
-
-✅ **Contact Enrichment:**
-Fetches verified contacts (CTO, VP Eng, Platform Leads) using Apollo.io's API by company domain or name.
-
-✅ **Cold Email Generation:**
-Uses Claude Opus + your CV to generate 3 short, friendly outreach emails tailored to the target company and contact profile.
-
-✅ **Slack Notification:**
-Posts company summary, score, contacts, and email variants to a Slack channel via Incoming Webhooks.
-
-✅ **Secrets Management:**
-Uses SOPS + age to encrypt and manage API keys and secrets safely in `config/.env.enc`.
-
----
-
-## 🛠️ Setup
-
-### 1️⃣ Install Dependencies
-
-```bash
-brew install sops age
-make install
+```
+$ python3 -m venv .venv
 ```
 
-### 2️⃣ Generate Age Key
+After the init process completes and the virtualenv is created, you can use the following
+step to activate your virtualenv.
 
-```bash
-mkdir -p ~/.config/sops/age
-age-keygen -o ~/.config/sops/age/keys.txt
+```
+$ source .venv/bin/activate
 ```
 
-Copy the generated public key (age1...) into your ~/.sops.yaml:
+If you are a Windows platform, you would activate the virtualenv like this:
 
-```yaml
-creation_rules:
-  - path_regex: '.*'
-    age:
-      - age1yourpublickeyhere
+```
+% .venv\Scripts\activate.bat
 ```
 
-### 3️⃣ Create Secrets
+Once the virtualenv is activated, you can install the required dependencies.
 
-Add:
-
-```bash
-CLAUDE_API_KEY=your_key
-PERPLEXITY_API_KEY=your_key
-APOLLO_API_KEY=your_key
-SLACK_WEBHOOK_URL=https://hooks.slack.com/services/...
+```
+$ pip install -r requirements.txt
 ```
 
+At this point you can now synthesize the CloudFormation template for this code.
 
-To your `config/.env` file. This file will be encrypted with SOPS.
-
-```bash
-make encrypt
+```
+$ cdk synth
 ```
 
-## ▶️ Running the Agent
+To add additional dependencies, for example other CDK libraries, just add
+them to your `setup.py` file and rerun the `pip install -r requirements.txt`
+command.
 
-Run manually with decrypted env vars:
+## Useful commands
 
-```bash
-make decrypt
-make run
-```
+ * `cdk ls`          list all stacks in the app
+ * `cdk synth`       emits the synthesized CloudFormation template
+ * `cdk deploy`      deploy this stack to your default AWS account/region
+ * `cdk diff`        compare deployed stack with current state
+ * `cdk docs`        open CDK documentation
 
-## 🔥 Notes
-
-rankings.csv is the canonical source of leads scored and processed.
-
-Slack messages include score, rationale, contacts, and 3 outreach email variants.
-
-Uses Perplexity's sonar-deep-research model by default (configured in config/settings.yaml).
-## 🔒 Security
-
-Secrets are encrypted with SOPS using your local age key.
-
-Do not commit decrypted .env files to git.
-
-Add this to .gitignore:
-```gitignore
-.env
-*.env
-__pycache__/
-*.
-
-pyc
-venv/
-```
-## 📬 Future Enhancements
-
-Schedule as daily cron or systemd job
-
-Auto-send first email via SMTP or Mailgun
-
-Deduplicate contacts using CRM integration
-
-Interactive Slack buttons to mark leads as contacted
-## 📝 License
-
-MIT
-
-For help, improvements, or custom flows — drop your notes in issues or contact Salek directly.
+Enjoy!

@@ -1,19 +1,10 @@
-# Ignore local environment files
-.env
-.env.*.bak
-.env.local
+*.swp
+package-lock.json
+__pycache__
+.pytest_cache
+.venv
+*.egg-info
 
-# Ignore Python virtual environments
-venv/
-.envrc
-
-# Ignore runtime files
-*.log
-__pycache__/
-*.pyc
-*.pyo
-
-# Ignore OS/Editor files
-.DS_Store
-.idea/
-.vscode/
+# CDK asset staging directory
+.cdk.staging
+cdk.out
