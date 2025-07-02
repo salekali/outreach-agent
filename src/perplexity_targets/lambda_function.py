@@ -1,8 +1,7 @@
-# src/perplexity_targets.py
-
 import json
 import boto3
 import requests
+from typing import List
 from pydantic import BaseModel
 from botocore.exceptions import ClientError
 
@@ -33,6 +32,9 @@ class AnswerFormat(BaseModel):
     company_website: str
     company_info: str
 
+class CompanyListResponse(BaseModel):
+    companies: List[AnswerFormat]
+
 def load_seen_websites():
     seen = set()
     try:
@@ -45,6 +47,7 @@ def load_seen_websites():
 
 def fetch_target_companies(model="sonar", num_companies=15):
     seen = load_seen_websites()
+    print(f"🔍 Found {len(seen)} previously seen companies. seen companies are: {seen}")
     exclude_clause = "".join(f"- {url}\n" for url in sorted(seen)) if seen else ""
 
     headers = {
@@ -52,37 +55,48 @@ def fetch_target_companies(model="sonar", num_companies=15):
         "Content-Type": "application/json"
     }
 
+    system_prompt = (
+        "You are a market intelligence assistant for a DevOps consultant. Your job is to identify companies that have either worked with consultants in the past or are currently hiring for DevOps, Platform Engineering, or Cloud Infrastructure roles. "
+        "Only include companies with credible public signals (LinkedIn, Crunchbase, GitHub, blogs, job listings, etc). "
+        "Focus on companies under 1000 employees and only in USA, UK, EU, Canada, Australia, or New Zealand. Never include companies from India. "
+        "Return only valid JSON list of objects with keys: 'company_name', 'company_website', and 'company_info'."
+    )
+
+    user_prompt = (
+        f"Give me a list of {num_companies} companies (with website) that either (a) have hired DevOps consultants recently, "
+        "or (b) are advertising for platform/cloud/infrastructure engineers. Aim for companies that are growing, "
+        "scaling, or cloud-mature enough to benefit from external help. "
+        "Only include if verifiable via public signals like LinkedIn jobs, hiring pages, Crunchbase, GitHub or blog activity. "
+        "Do not include companies that are too small (less than 10 employees) or too large (over 1000 employees). "
+        "For example, do not include companies like Docker, RedHat, IBM, Atlassian, or any large well-known companies."
+        "Restrict results to companies headquartered in the USA, UK, EU, Canada, Australia, or New Zealand. "
+        "Never include companies headquartered in India.\n\n"
+        f"Give me exactly {num_companies} companies in valid JSON list format. Each element must be a dictionary with these keys: "
+        "'company_name', 'company_website', and 'company_info'.\n\n"
+        "Wrap all results in a JSON array. Do not include a single object, markdown, or plain text.\n\n"
+        "The response must look like:\n"
+        "[\n"
+        "  {\"company_name\": \"Acme Inc\", \"company_website\": \"https://acme.com\", \"company_info\": \"...\"},\n"
+        "  {\"company_name\": \"Beta Corp\", \"company_website\": \"https://beta.io\", \"company_info\": \"...\"}\n"
+        "]\n\n"
+        f"Exclude these websites:\n{exclude_clause}"
+    )
+
     payload = {
         "model": model,
         "messages": [
             {
                 "role": "system",
-                "content": (
-                    "You are a market intelligence assistant for a DevOps consultant. Your job is to identify companies that have either worked with consultants in the past or are currently hiring for DevOps, Platform Engineering, or Cloud Infrastructure roles. "
-                    "Only include companies with credible public signals (LinkedIn, Crunchbase, GitHub, blogs, job listings, etc). "
-                    "Focus on companies under 1000 employees and only in USA, UK, EU, Canada, Australia, or New Zealand. Never include companies from India. "
-                    "Return only valid JSON list of objects with keys: 'company_name', 'company_website', and 'company_info'."
-                )
+                "content": system_prompt
             },
             {
                 "role": "user",
-                "content": (
-                    f"Give me a list of {num_companies} companies (with website) that either (a) have hired DevOps consultants recently, "
-                    "or (b) are advertising for platform/cloud/infrastructure engineers. Aim for companies that are growing, "
-                    "scaling, or cloud-mature enough to benefit from external help. "
-                    "Only include if verifiable via public signals like LinkedIn jobs, hiring pages, Crunchbase, GitHub or blog activity. "
-                    "Do not include companies that are too small (less than 10 employees) or too large (over 1000 employees). "
-                    "For example, do not include companies like Docker, RedHat, IBM, Atlassian, or any large well-known companies."
-                    "Restrict results to companies headquartered in the USA, UK, EU, Canada, Australia, or New Zealand. "
-                    "Never include companies from India."
-                    "Do not include any of the following websites:\n" + exclude_clause +
-                    "Return in valid JSON format as a list of objects with keys: 'company_name', 'company_website' and 'company_info'."
-                )
+                "content": user_prompt
             }
         ],
         "response_format": {
             "type": "json_schema",
-            "json_schema": {"schema": AnswerFormat.model_json_schema()},
+            "json_schema": {"schema": CompanyListResponse.model_json_schema()}
         }
     }
 
@@ -92,7 +106,10 @@ def fetch_target_companies(model="sonar", num_companies=15):
 
     try:
         content = data["choices"][0]["message"]["content"]
-        company_data = json.loads(content)
+        print(f"🔍 Perplexity response: {content}")
+        company_data_dict = json.loads(content)
+        company_data = company_data_dict.get("companies", [])
+
     except Exception as e:
         raise ValueError(f"❌ Failed to parse Perplexity response: {e}")
 
