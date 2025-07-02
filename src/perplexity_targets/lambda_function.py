@@ -43,7 +43,7 @@ def load_seen_websites():
         print(f"⚠️ Error reading from DynamoDB: {e}")
     return seen
 
-def fetch_target_companies(model="sonar-medium-online", num_companies=15):
+def fetch_target_companies(model="sonar", num_companies=15):
     seen = load_seen_websites()
     exclude_clause = "".join(f"- {url}\n" for url in sorted(seen)) if seen else ""
 
@@ -83,7 +83,7 @@ def fetch_target_companies(model="sonar-medium-online", num_companies=15):
         "response_format": {
             "type": "json_schema",
             "json_schema": {"schema": AnswerFormat.model_json_schema()},
-        },
+        }
     }
 
     response = requests.post(PERPLEXITY_API_URL, headers=headers, json=payload)

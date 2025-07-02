@@ -12,7 +12,7 @@ from constructs import Construct
 from pathlib import Path
 import os
 
-class OutreachStack(Stack):
+class OutreachAgentStack(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs):
         super().__init__(scope, id, **kwargs)
 
