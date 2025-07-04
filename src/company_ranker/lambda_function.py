@@ -15,7 +15,7 @@ def get_anthropic_api_key(secret_name="app/ai/agent/devops-outreach"):
     try:
         secret_response = secrets_client.get_secret_value(SecretId=secret_name)
         secret_data = json.loads(secret_response["SecretString"])
-        return secret_data["ANTHROPIC_API_KEY"]
+        return secret_data["CLAUDE_API_KEY"]
     except ClientError as e:
         raise ValueError(f"❌ Failed to fetch API key from Secrets Manager: {e}")
 
@@ -75,8 +75,7 @@ def rank_company(company_name, company_website, model):
 
 def lambda_handler(event, context):
     try:
-        detail = json.loads(event.get("detail", "{}"))
-        websites = detail.get("websites", [])
+        websites = event.get("websites", [])
     except Exception as e:
         print(f"❌ Error parsing event detail: {e}")
         return {"statusCode": 400, "body": "Invalid event format"}
@@ -95,9 +94,8 @@ def lambda_handler(event, context):
                 continue
 
             name = item["company_name"]
-            info = item.get("company_info", "")
 
-            result = rank_company(name, website, info, model="claude-3-sonnet-20240229")
+            result = rank_company(name, website, model="claude-sonnet-4-20250514")
 
             table.update_item(
                 Key={"company_website": website},
@@ -123,6 +121,7 @@ def lambda_handler(event, context):
         "body": json.dumps({
             "message": "Ranked companies updated.",
             "count": len(results),
-            "results": results
+            "results": results,
+            "websites": websites
         })
     }

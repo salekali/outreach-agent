@@ -58,7 +58,7 @@ def fetch_target_companies(model="sonar", num_companies=15):
     system_prompt = (
         "You are a market intelligence assistant for a DevOps consultant. Your job is to identify companies that have either worked with consultants in the past or are currently hiring for DevOps, Platform Engineering, or Cloud Infrastructure roles. "
         "Only include companies with credible public signals (LinkedIn, Crunchbase, GitHub, blogs, job listings, etc). "
-        "Focus on companies under 1000 employees and only in USA, UK, EU, Canada, Australia, or New Zealand. Never include companies from India. "
+        "Focus on companies under 100 employees and only in USA, UK, EU, Canada, Australia, or New Zealand. Never include companies from India. "
         "Return only valid JSON list of objects with keys: 'company_name', 'company_website', and 'company_info'."
     )
 
@@ -67,7 +67,7 @@ def fetch_target_companies(model="sonar", num_companies=15):
         "or (b) are advertising for platform/cloud/infrastructure engineers. Aim for companies that are growing, "
         "scaling, or cloud-mature enough to benefit from external help. "
         "Only include if verifiable via public signals like LinkedIn jobs, hiring pages, Crunchbase, GitHub or blog activity. "
-        "Do not include companies that are too small (less than 10 employees) or too large (over 1000 employees). "
+        "Do not include companies that are too small (less than 10 employees) or too large (over 100 employees). "
         "For example, do not include companies like Docker, RedHat, IBM, Atlassian, or any large well-known companies."
         "Restrict results to companies headquartered in the USA, UK, EU, Canada, Australia, or New Zealand. "
         "Never include companies headquartered in India.\n\n"

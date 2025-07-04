@@ -18,9 +18,21 @@ CLAUDE_API_KEY = secrets["CLAUDE_API_KEY"]
 SLACK_WEBHOOK_URL = secrets["SLACK_WEBHOOK_URL"]
 client = Anthropic(api_key=CLAUDE_API_KEY)
 
-def generate_email_variants(company_name, contacts, model="claude-3-opus-20240229"):
+def generate_email_variants(company_name, company_info, contacts, model="claude-opus-4-20250514"):
     if not contacts:
         return ["No contacts found."]
+
+    is_consultancy = any(kw in company_info.lower() for kw in ["consulting", "solutions", "services", "agency", "systems", "group"])
+
+    if is_consultancy:
+        use_case = (
+            "You're reaching out to a DevOps consulting company that may be open to partnering on projects, subcontracting overflow work, or collaborating on complex cloud transformations. "
+            "They already understand DevOps, so focus on how you can complement or extend their delivery capacity, bring in niche AWS or Kubernetes expertise, or help with white-labeled engagements."
+        )
+    else:
+        use_case = (
+            "You're reaching out to a company that may benefit from DevOps consulting. Focus on how you can help them scale cloud infrastructure, improve developer workflows, or reduce ops overhead."
+        )
 
     consultant_bio = (
         "You are a results-oriented DevOps consultant with over 8 years of experience helping companies modernize "
@@ -36,6 +48,7 @@ def generate_email_variants(company_name, contacts, model="claude-3-opus-2024022
         f"{consultant_bio}\n\n"
         f"You're reaching out to: {company_name}\n"
         f"Relevant contacts: {summary}\n\n"
+        f"{use_case}\n\n"
         "Write 3 short cold email variants in Australian English (80–120 words). Each should:\n"
         "- Be friendly, confident, and human\n"
         "- Briefly introduce yourself and what you offer\n"
@@ -109,7 +122,7 @@ def lambda_handler(event, context):
                 score = item.get("score", "N/A")
                 rationale = item.get("rationale", "N/A")
                 contacts = item.get("contacts", [])
-                emails = generate_email_variants(name, contacts)
+                emails = generate_email_variants(name, info, contacts)
                 send_to_slack(name, website, info, score, rationale, contacts, emails)
         except Exception as e:
             print(f"❌ Failed for {website}: {e}")

@@ -19,10 +19,11 @@ def get_apollo_api_key(secret_name="app/ai/agent/devops-outreach"):
         raise
 
 # Apollo configuration
-APOLLO_ENDPOINT = "https://api.apollo.io/v1/mixed_people/search"
+APOLLO_PEOPLE_SEARCH_ENDPOINT = "https://api.apollo.io/v1/mixed_people/search"
+APOLLO_PEOPLE_ENRICHMENT_ENDPOINT = "https://api.apollo.io/api/v1/people/match"
 APOLLO_API_KEY = get_apollo_api_key()
 
-def search_contacts(company_name=None, company_website=None, titles=None, limit=4):
+def search_contacts(company_website=None, limit=4):
     headers = {
         "Cache-Control": "no-cache",
         "Content-Type": "application/json",
@@ -30,41 +31,42 @@ def search_contacts(company_name=None, company_website=None, titles=None, limit=
     }
 
     params = {
-        "person_titles": titles or [
-            "CTO", "VP Engineering", "Director of DevOps",
-            "Head of Platform", "Infrastructure Manager"
-        ],
+        "person_seniorities[]": [ "c_suite", "partner", "vp", "head", "director" ],
         "person_titles_include_variants": True,
         "page": 1,
         "per_page": limit,
+        "q_organization_domains_list[]": [company_website.split("https://")[-1] if company_website else ""]
     }
 
-    if company_website:
-        params["q_organization_domains"] = company_website
-    elif company_name:
-        params["q_organization_names"] = company_name
-    else:
-        raise ValueError("You must provide either company_name or company_website")
-
     try:
-        res = requests.get(APOLLO_ENDPOINT, headers=headers, params=params)
+        res = requests.get(APOLLO_PEOPLE_SEARCH_ENDPOINT, headers=headers, params=params)
         res.raise_for_status()
         data = res.json()
         people = data.get("people", [])
 
         contacts = []
         for person in people:
-            email = person.get("email") if person.get("email_status") == "verified" else ""
-            contacts.append({
-                "name": f"{person.get('first_name', '')} {person.get('last_name', '')}".strip(),
+            contact = {
+                "name": person.get("name", ""),
                 "title": person.get("title", ""),
-                "email": email,
-            })
+                "linkedin_url": person.get("linkedin_url", ""),
+                "seniority": person.get("seniority", ""),
+            }
+
+            res_contact = requests.get(
+                APOLLO_PEOPLE_ENRICHMENT_ENDPOINT,
+                headers=headers,
+                params={"person_id": person.get("id")}
+            )
+            email = res_contact.json().get("email", None)
+            contact["email"] = email if email else "No email found"
+
+            contacts.append(contact)
 
         return contacts
 
     except Exception as e:
-        print(f"[Apollo] ❌ Failed to fetch contacts for {company_name or company_website}: {e}")
+        print(f"[Apollo] ❌ Failed to fetch contacts for {company_website}: {e}")
         return []
 
 def lambda_handler(event, context):
@@ -105,6 +107,7 @@ def lambda_handler(event, context):
         "statusCode": 200,
         "body": json.dumps({
             "message": "Contact discovery complete.",
-            "updated_companies": updated
+            "updated_companies": updated,
+            "websites": websites
         })
     }
