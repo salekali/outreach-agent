@@ -89,7 +89,12 @@ class OutreachAgentStack(Stack):
         )
 
         # Parallel block
-        parallel_tasks = sfn.Parallel(self, "Rank and Enrich Contacts")
+        parallel_tasks = sfn.Parallel(self, "Rank and Enrich Contacts",
+            result_selector={
+                "websites.$": "$[0].body"  # extract from first branch (e.g., ranker)
+            },
+            output_path="$.websites"
+        )
         parallel_tasks.branch(ranker_task)
         parallel_tasks.branch(apollo_task)
 
@@ -101,7 +106,7 @@ class OutreachAgentStack(Stack):
         )
 
         # Create the State Machine
-        state_machine = sfn.StateMachine(
+        sfn.StateMachine(
             self, "OutreachWorkflow",
             definition=definition,
             timeout=Duration.minutes(5),
