@@ -1,8 +1,8 @@
 import json
 import boto3
 import requests
-from typing import List
-from pydantic import BaseModel
+from typing import Annotated
+from pydantic import BaseModel, conlist
 from botocore.exceptions import ClientError
 
 # AWS clients
@@ -33,7 +33,11 @@ class AnswerFormat(BaseModel):
     company_info: str
 
 class CompanyListResponse(BaseModel):
-    companies: List[AnswerFormat]
+
+    companies: Annotated[
+        list[AnswerFormat],
+        conlist(AnswerFormat, min_items=15, max_items=15)
+    ]
 
 def load_seen_websites():
     seen = set()
@@ -56,19 +60,20 @@ def fetch_target_companies(model="sonar", num_companies=15):
     }
 
     system_prompt = (
-        "You are a market intelligence assistant for a DevOps consultant. Your job is to identify companies that have either worked with consultants in the past or are currently hiring for DevOps, Platform Engineering, or Cloud Infrastructure roles. "
+        "You are a market intelligence assistant for a DevOps consultant. Your job is to identify companies that are good leads for DevOps consulting based on their public signals.\n"
+        "Consider factors like recent hiring for DevOps roles, history of using consultants, product complexity, and any recent funding or growth signals.\n"
         "Only include companies with credible public signals (LinkedIn, Crunchbase, GitHub, blogs, job listings, etc). "
-        "Focus on companies under 100 employees and only in USA, UK, EU, Canada, Australia, or New Zealand. Never include companies from India. "
+        "Focus on companies under 1000 employees and only in USA, UK, EU, Canada, Australia, or New Zealand. Never include companies from India. "
         "Return only valid JSON list of objects with keys: 'company_name', 'company_website', and 'company_info'."
     )
 
     user_prompt = (
-        f"Give me a list of {num_companies} companies (with website) that either (a) have hired DevOps consultants recently, "
-        "or (b) are advertising for platform/cloud/infrastructure engineers. Aim for companies that are growing, "
-        "scaling, or cloud-mature enough to benefit from external help. "
+        f"Give me a list of {num_companies} companies (with website) that are good leads for DevOps consulting based on their public signals.\n"
+        "Consider factors like recent hiring for DevOps roles, history of using consultants, product complexity, and any recent funding or growth signals.\n"
+        "Aim for companies that are growing, scaling, or cloud-mature enough to benefit from external help.\n"
         "Only include if verifiable via public signals like LinkedIn jobs, hiring pages, Crunchbase, GitHub or blog activity. "
-        "Do not include companies that are too small (less than 10 employees) or too large (over 100 employees). "
-        "For example, do not include companies like Docker, RedHat, IBM, Atlassian, or any large well-known companies."
+        "Do not include companies that are too small (less than 10 employees) or too large (over 1000 employees). "
+        "For example, do not include companies like Docker, RedHat, IBM, Atlassian, or any large well-known companies.\n"
         "Restrict results to companies headquartered in the USA, UK, EU, Canada, Australia, or New Zealand. "
         "Never include companies headquartered in India.\n\n"
         f"Give me exactly {num_companies} companies in valid JSON list format. Each element must be a dictionary with these keys: "

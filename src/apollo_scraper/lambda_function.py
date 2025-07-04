@@ -30,12 +30,26 @@ def search_contacts(company_website=None, limit=4):
         "x-api-key": APOLLO_API_KEY,
     }
 
+    # get company domain from website
+    if company_website:
+        if company_website.startswith("https://"):
+            company_website = company_website.split("https://")[-1]
+        elif company_website.startswith("http://"):
+            company_website = company_website.split("http://")[-1]
+        if "/" in company_website:
+            company_website = company_website.split("/")[0]
+        if "www." in company_website:
+            company_website = company_website.replace("www.", "")
+    else:
+        print("[Apollo] ❌ No company website provided.")
+        return []
+
     params = {
         "person_seniorities[]": [ "c_suite", "partner", "vp", "head", "director" ],
         "person_titles_include_variants": True,
         "page": 1,
         "per_page": limit,
-        "q_organization_domains_list[]": [company_website.split("https://")[-1] if company_website else ""]
+        "q_organization_domains_list[]": [company_website]
     }
 
     try:
@@ -58,11 +72,12 @@ def search_contacts(company_website=None, limit=4):
                 headers=headers,
                 params={"person_id": person.get("id")}
             )
-            email = res_contact.json().get("email", None)
+            res_contact.raise_for_status()
+            res_contact = res_contact.json()
+            email = res_contact.get("person").get("email", None)
             contact["email"] = email if email else "No email found"
 
             contacts.append(contact)
-
         return contacts
 
     except Exception as e:
