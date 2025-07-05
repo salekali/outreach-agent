@@ -101,7 +101,6 @@ def send_to_slack(company_name, website, company_info, score, rationale, contact
 
     if resp.status_code != 200:
         print(f"❌ Slack failed: {resp.status_code} {resp.text}")
-        raise Exception(f"Slack notification failed: {resp.status_code} {resp.text}")
     else:
         print(f"✅ Slack sent for {company_name}")
 
