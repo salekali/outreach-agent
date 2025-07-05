@@ -9,16 +9,16 @@ dynamodb = boto3.resource("dynamodb")
 table = dynamodb.Table("devops-outreach-db")
 
 # Load secrets
-def get_secret(name):
-    secret = secrets_client.get_secret_value(SecretId=name)
+def get_secret(secret_name="app/ai/agent/devops-outreach"):
+    secret = secrets_client.get_secret_value(SecretId=secret_name)
     return json.loads(secret["SecretString"])
 
-secrets = get_secret("devops-outreach-secrets")
+secrets = get_secret()
 CLAUDE_API_KEY = secrets["CLAUDE_API_KEY"]
 SLACK_WEBHOOK_URL = secrets["SLACK_WEBHOOK_URL"]
 client = Anthropic(api_key=CLAUDE_API_KEY)
 
-def generate_email_variants(company_name, company_info, contacts, model="claude-opus-4-20250514"):
+def generate_email_variants(company_name, company_info, contacts, model="claude-sonnet-4-20250514"):
     if not contacts:
         return ["No contacts found."]
 
@@ -35,7 +35,7 @@ def generate_email_variants(company_name, company_info, contacts, model="claude-
         )
 
     consultant_bio = (
-        "You are a results-oriented DevOps consultant with over 8 years of experience helping companies modernize "
+        "You are a results-oriented DevOps consultant named Salek Ali, with over 8 years of experience helping companies modernize "
         "and scale their cloud infrastructure. You specialize in AWS, Kubernetes, Terraform, and CI/CD automation, "
         "and have deep technical expertise backed by a PhD in distributed systems. You've led high-impact projects "
         "for both startups and government agencies—building secure AWS landing zones, optimizing EKS deployments, and "
@@ -65,8 +65,8 @@ def generate_email_variants(company_name, company_info, contacts, model="claude-
     )
 
     content = msg.content[0].text.strip()
-    variants = [v.strip() for v in content.split("\n\n") if len(v.strip()) > 20]
-    return variants[:3]
+    print(content)
+    return content
 
 def send_to_slack(company_name, website, company_info, score, rationale, contacts, emails):
     blocks = [
@@ -74,7 +74,7 @@ def send_to_slack(company_name, website, company_info, score, rationale, contact
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": f"*🚀 New Lead Scored: {company_name}*\n<{website}|Visit Site>\n*Score:* {score}\n*Why:* {rationale}\n*Info:* {company_info}"
+                "text": f"*🚀 New Lead Scored: {company_name}*\n<{website}|Visit Site>\n*Score:* {score}\n*Why:* {rationale}\n*Company Info:* {company_info}"
             }
         },
         {"type": "divider"},
@@ -85,23 +85,23 @@ def send_to_slack(company_name, website, company_info, score, rationale, contact
             "type": "section",
             "text": {
                 "type": "mrkdwn",
-                "text": f"*{contact.get('name')}* — {contact.get('title')}\n📧 {contact.get('email')}"
+                "text": f"*{contact.get('name')}* — {contact.get('title')}\n:e-mail: {contact.get('email')}\n:male-technologist:{contact.get('linkedin_url')}"
             }
         })
 
     blocks.append({"type": "divider"})
 
-    for i, email in enumerate(emails):
-        blocks.append({
-            "type": "section",
-            "text": {"type": "mrkdwn", "text": f"*Email Variant {i+1}:*\n{email}"}
-        })
+    blocks.append({
+        "type": "section",
+        "text": {"type": "mrkdwn", "text": emails}
+    })
 
     payload = {"blocks": blocks}
     resp = requests.post(SLACK_WEBHOOK_URL, json=payload)
 
     if resp.status_code != 200:
         print(f"❌ Slack failed: {resp.status_code} {resp.text}")
+        raise Exception(f"Slack notification failed: {resp.status_code} {resp.text}")
     else:
         print(f"✅ Slack sent for {company_name}")
 
@@ -123,6 +123,7 @@ def lambda_handler(event, context):
                 rationale = item.get("rationale", "N/A")
                 contacts = item.get("contacts", [])
                 emails = generate_email_variants(name, info, contacts)
+                emails = emails.replace("**", "*")
                 send_to_slack(name, website, info, score, rationale, contacts, emails)
         except Exception as e:
             print(f"❌ Failed for {website}: {e}")

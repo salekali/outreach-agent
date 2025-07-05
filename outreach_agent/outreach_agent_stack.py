@@ -46,7 +46,7 @@ class OutreachAgentStack(Stack):
                 index="lambda_function.py",
                 handler="lambda_handler",
                 runtime=_lambda.Runtime.PYTHON_3_12,
-                timeout=Duration.seconds(60),
+                timeout=Duration.seconds(210),
                 role=lambda_role,
             )
 
@@ -83,18 +83,13 @@ class OutreachAgentStack(Stack):
             self, "Notify via Slack",
             lambda_function=lambdas["slack_notifier"],
             payload=sfn.TaskInput.from_object({
-                "websites": sfn.JsonPath.string_at("$.websites")
+                "websites": sfn.JsonPath.string_at("$[0].websites")
             }),
             output_path="$.Payload"
         )
 
         # Parallel block
-        parallel_tasks = sfn.Parallel(self, "Rank and Enrich Contacts",
-            result_selector={
-                "websites.$": "$[0].body"  # extract from first branch (e.g., ranker)
-            },
-            output_path="$.websites"
-        )
+        parallel_tasks = sfn.Parallel(self, "Rank and Enrich Contacts")
         parallel_tasks.branch(ranker_task)
         parallel_tasks.branch(apollo_task)
 

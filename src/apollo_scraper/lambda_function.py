@@ -120,9 +120,11 @@ def lambda_handler(event, context):
 
     return {
         "statusCode": 200,
+        "websites": websites,
         "body": json.dumps({
             "message": "Contact discovery complete.",
-            "updated_companies": updated,
-            "websites": websites
+            "updated_companies": updated
         })
     }
+
+

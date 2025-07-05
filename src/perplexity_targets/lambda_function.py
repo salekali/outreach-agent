@@ -1,8 +1,8 @@
 import json
 import boto3
 import requests
-from typing import Annotated
-from pydantic import BaseModel, conlist
+from typing import List
+from pydantic import BaseModel
 from botocore.exceptions import ClientError
 
 # AWS clients
@@ -33,11 +33,7 @@ class AnswerFormat(BaseModel):
     company_info: str
 
 class CompanyListResponse(BaseModel):
-
-    companies: Annotated[
-        list[AnswerFormat],
-        conlist(AnswerFormat, min_items=15, max_items=15)
-    ]
+    companies: List[AnswerFormat]
 
 def load_seen_websites():
     seen = set()
@@ -60,7 +56,7 @@ def fetch_target_companies(model="sonar", num_companies=15):
     }
 
     system_prompt = (
-        "You are a market intelligence assistant for a DevOps consultant. Your job is to identify companies that are good leads for DevOps consulting based on their public signals.\n"
+        f"You are a market intelligence assistant for a DevOps consultant. Your job is to identify {num_companies} companies that are good leads for DevOps consulting based on their public signals.\n"
         "Consider factors like recent hiring for DevOps roles, history of using consultants, product complexity, and any recent funding or growth signals.\n"
         "Only include companies with credible public signals (LinkedIn, Crunchbase, GitHub, blogs, job listings, etc). "
         "Focus on companies under 1000 employees and only in USA, UK, EU, Canada, Australia, or New Zealand. Never include companies from India. "

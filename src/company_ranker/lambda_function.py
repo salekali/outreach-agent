@@ -24,7 +24,7 @@ ANTHROPIC_API_KEY = get_anthropic_api_key()
 client = Anthropic(api_key=ANTHROPIC_API_KEY)
 
 # Function to rank a company based on public signals
-def rank_company(company_name, company_website, model):
+def rank_company(company_name, company_website, model="claude-sonnet-4-20250514"):
     prompt = (
         f"Company: {company_name}\n"
         f"Website: {company_website}\n\n"
@@ -116,12 +116,13 @@ def lambda_handler(event, context):
         except ClientError as e:
             print(f"❌ Error accessing/updating DynamoDB for {website}: {e}")
 
+
     return {
         "statusCode": 200,
+        "websites": websites,
         "body": json.dumps({
             "message": "Ranked companies updated.",
             "count": len(results),
-            "results": results,
-            "websites": websites
+            "results": results
         })
     }
